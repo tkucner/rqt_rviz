@@ -34,94 +34,130 @@
 #include <QGridLayout>
 #include <QLabel>
 #include <QPushButton>
+#include <dirent.h>
 
 #include <rqt_rviz/config_dialog.h>
 
+#include <iostream>
+
 namespace rqt_rviz {
 
-ConfigDialog::ConfigDialog()
+    bool has_suffix(const std::string& s, const std::string& suffix)
 {
-  // Window configurations
-  this->setWindowTitle(tr("Choose configuration"));
-  this->setWindowFlags(Qt::Window | Qt::WindowCloseButtonHint |
-      Qt::WindowStaysOnTopHint | Qt::CustomizeWindowHint);
-
-  // File
-  QLabel* file_label = new QLabel("File path");
-  file_label->setToolTip("Full path to file");
-
-  file_edit_ = new QLineEdit;
-  file_edit_->setMinimumWidth(300);
-
-  QPushButton* browse_button = new QPushButton(tr("Browse"));
-  connect(browse_button, SIGNAL(clicked()), this, SLOT(OnBrowse()));
-
-  // Hide menu
-  QLabel* hide_label = new QLabel("Hide menu");
-  hide_label->setToolTip("Check to hide RViz's top menu bar");
-
-  hide_box_ = new QCheckBox();
-
-  // Buttons
-  QPushButton* cancel_button = new QPushButton(tr("&Cancel"));
-  this->connect(cancel_button, SIGNAL(clicked()), this, SLOT(close()));
-
-  QPushButton* apply_button = new QPushButton(tr("&Apply"));
-  apply_button->setDefault(true);
-  this->connect(apply_button, SIGNAL(clicked()), this, SLOT(accept()));
-
-  QHBoxLayout* buttons_layout = new QHBoxLayout;
-  buttons_layout->addWidget(cancel_button);
-  buttons_layout->addWidget(apply_button);
-
-  // Layout
-  QGridLayout* main_layout = new QGridLayout();
-
-  main_layout->addWidget(file_label, 0, 0);
-  main_layout->addWidget(file_edit_, 0, 1);
-  main_layout->addWidget(browse_button, 0, 2);
-
-  main_layout->addWidget(hide_label, 1, 0);
-  main_layout->addWidget(hide_box_, 1, 1);
-  main_layout->setAlignment(hide_box_, Qt::AlignLeft);
-
-  main_layout->addLayout(buttons_layout, 2, 0, 1, 3);
-  main_layout->setColumnStretch(1, 2);
-
-  this->setLayout(main_layout);
+    return (s.size() >= suffix.size()) && equal(suffix.rbegin(), suffix.rend(), s.rbegin());
 }
 
-ConfigDialog::~ConfigDialog()
-{
-}
+    ConfigDialog::ConfigDialog() {
+        // Window configurations
+        this->setWindowTitle(tr("Choose configuration"));
+        this->setWindowFlags(Qt::Window | Qt::WindowCloseButtonHint |
+                             Qt::WindowStaysOnTopHint |
+                             Qt::CustomizeWindowHint);
 
-void ConfigDialog::OnBrowse()
-{
-  QString filename = QFileDialog::getOpenFileName(0,
-    tr("Choose config file:"), "", tr("Rviz config file (*.rviz)"));
+        // File
+        QLabel *file_label = new QLabel("File path");
+        file_label->setToolTip("Full path to file");
 
-  file_edit_->setText(filename);
-}
+        file_edit_ = new QLineEdit;
+        file_edit_->setMinimumWidth(300);
 
-std::string ConfigDialog::GetFile() const
-{
-  return file_edit_->text().toStdString();
-}
+        QPushButton *browse_button = new QPushButton(tr("Browse"));
+        connect(browse_button, SIGNAL(clicked()), this, SLOT(OnBrowse()));
 
-void ConfigDialog::SetFile(const std::string& file)
-{
-  file_edit_->setText(QString::fromStdString(file));
-}
+        // Hide menu
+        QLabel *hide_label = new QLabel("Hide menu");
+        hide_label->setToolTip("Check to hide RViz's top menu bar");
 
-bool ConfigDialog::GetHide() const
-{
-  return hide_box_->isChecked();
-}
+        hide_box_ = new QCheckBox();
 
-void ConfigDialog::SetHide(const bool hide)
-{
-  hide_box_->setChecked(hide);
-}
+        // Buttons
+        QPushButton *cancel_button = new QPushButton(tr("&Cancel"));
+        this->connect(cancel_button, SIGNAL(clicked()), this, SLOT(close()));
 
+        QPushButton *apply_button = new QPushButton(tr("&Apply"));
+        apply_button->setDefault(true);
+        this->connect(apply_button, SIGNAL(clicked()), this, SLOT(accept()));
+
+        QHBoxLayout *buttons_layout = new QHBoxLayout;
+        buttons_layout->addWidget(cancel_button);
+        buttons_layout->addWidget(apply_button);
+
+        // Dropdown list
+        config_list = new QComboBox();
+        QLabel *select_configuration = new QLabel("Select Configuration");
+        // Layout
+        QGridLayout *main_layout = new QGridLayout();
+
+        main_layout->addWidget(file_label, 0, 0);
+        main_layout->addWidget(file_edit_, 0, 1);
+        main_layout->addWidget(browse_button, 0, 2);
+
+
+        main_layout->addWidget(select_configuration, 1, 0);
+        main_layout->addWidget(config_list, 1, 1);
+
+        main_layout->addWidget(hide_label, 2, 0);
+        main_layout->addWidget(hide_box_, 2, 1);
+        main_layout->setAlignment(hide_box_, Qt::AlignLeft);
+
+        main_layout->addLayout(buttons_layout, 2, 0, 1, 3);
+        main_layout->setColumnStretch(1, 2);
+
+        this->setLayout(main_layout);
+    }
+
+    ConfigDialog::~ConfigDialog() {
+    }
+
+    void ConfigDialog::OnBrowse() {
+        std::vector<std::string> files;
+        QString filename = QFileDialog::getExistingDirectory(0,
+                                                             tr("Choose config file:"),
+                                                             "");
+
+        file_edit_->setText(filename);
+        std::string directory=filename.toUtf8().constData();
+        files=get_config_files(directory);
+        for (int i=0;i<files.size();i++)
+            config_list->addItem(QString::fromStdString(files[i]));
+
+    }
+
+    std::string ConfigDialog::GetFile() const {
+        return file_edit_->text().toStdString();
+    }
+
+    void ConfigDialog::SetFile(const std::string &file) {
+        file_edit_->setText(QString::fromStdString(file));
+    }
+
+    bool ConfigDialog::GetHide() const {
+        return hide_box_->isChecked();
+    }
+
+    void ConfigDialog::SetHide(const bool hide) {
+        hide_box_->setChecked(hide);
+    }
+
+    std::vector<std::string> ConfigDialog::get_config_files(std::string path) {
+        std::vector<std::string> files;
+        DIR *dir;
+
+        struct dirent *ent;
+        if ((dir = opendir(path.c_str())) != NULL) {
+            /* print all the files and directories within directory */
+            while ((ent = readdir(dir)) != NULL) {
+
+                if(has_suffix(ent->d_name, ".rviz"))
+                    files.push_back(ent->d_name);
+            }
+            closedir(dir);
+        } else {
+            /* could not open directory */
+            perror("");
+
+        }
+        return files;
+    }
 }
 

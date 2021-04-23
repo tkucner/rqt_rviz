@@ -36,6 +36,9 @@
 #include <QCheckBox>
 #include <QDialog>
 #include <QLineEdit>
+#include <QComboBox>
+#include <vector>
+#include <string>
 
 namespace rqt_rviz
 {
@@ -72,11 +75,15 @@ private slots:
 
 private:
 
+    std::vector<std::string> get_config_files(std::string path);
+
   /** @brief Holds the file path. */
   QLineEdit* file_edit_;
 
   /** @brief Holds the boolean for whether to hide the menu. */
   QCheckBox* hide_box_;
+
+  QComboBox *config_list;
 };
 
 }
