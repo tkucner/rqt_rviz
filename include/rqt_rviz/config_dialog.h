@@ -73,12 +73,16 @@ private slots:
   /** @brief Callback when the browse button is pressed. */
   void OnBrowse();
 
+  void OnSelect();
+
 private:
 
-    std::vector<std::string> get_config_files(std::string path);
+    static std::vector<std::string> get_config_files(std::string path);
 
   /** @brief Holds the file path. */
-  QLineEdit* file_edit_;
+  QLineEdit* source_dir_;
+
+  std::string file_edit_;
 
   /** @brief Holds the boolean for whether to hide the menu. */
   QCheckBox* hide_box_;

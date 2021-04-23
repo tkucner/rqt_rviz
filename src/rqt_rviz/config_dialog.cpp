@@ -35,6 +35,7 @@
 #include <QLabel>
 #include <QPushButton>
 #include <dirent.h>
+#include <QComboBox>
 
 #include <rqt_rviz/config_dialog.h>
 
@@ -48,6 +49,8 @@ namespace rqt_rviz {
 }
 
     ConfigDialog::ConfigDialog() {
+
+
         // Window configurations
         this->setWindowTitle(tr("Choose configuration"));
         this->setWindowFlags(Qt::Window | Qt::WindowCloseButtonHint |
@@ -58,8 +61,12 @@ namespace rqt_rviz {
         QLabel *file_label = new QLabel("File path");
         file_label->setToolTip("Full path to file");
 
-        file_edit_ = new QLineEdit;
-        file_edit_->setMinimumWidth(300);
+        source_dir_ = new QLineEdit;
+        source_dir_->setMinimumWidth(300);
+
+
+
+
 
         QPushButton *browse_button = new QPushButton(tr("Browse"));
         connect(browse_button, SIGNAL(clicked()), this, SLOT(OnBrowse()));
@@ -84,12 +91,13 @@ namespace rqt_rviz {
 
         // Dropdown list
         config_list = new QComboBox();
+        this->connect(config_list, SIGNAL(activated(int)),this,SLOT(OnSelect()));
         QLabel *select_configuration = new QLabel("Select Configuration");
         // Layout
         QGridLayout *main_layout = new QGridLayout();
 
         main_layout->addWidget(file_label, 0, 0);
-        main_layout->addWidget(file_edit_, 0, 1);
+        main_layout->addWidget(source_dir_, 0, 1);
         main_layout->addWidget(browse_button, 0, 2);
 
 
@@ -103,10 +111,16 @@ namespace rqt_rviz {
         main_layout->addLayout(buttons_layout, 2, 0, 1, 3);
         main_layout->setColumnStretch(1, 2);
 
+
         this->setLayout(main_layout);
     }
 
     ConfigDialog::~ConfigDialog() {
+    }
+
+    void ConfigDialog::OnSelect() {
+        file_edit_=source_dir_->text().toStdString()+"/"+config_list->currentText().toStdString();
+
     }
 
     void ConfigDialog::OnBrowse() {
@@ -115,7 +129,7 @@ namespace rqt_rviz {
                                                              tr("Choose config file:"),
                                                              "");
 
-        file_edit_->setText(filename);
+        source_dir_->setText(filename);
         std::string directory=filename.toUtf8().constData();
         files=get_config_files(directory);
         for (int i=0;i<files.size();i++)
@@ -124,11 +138,13 @@ namespace rqt_rviz {
     }
 
     std::string ConfigDialog::GetFile() const {
-        return file_edit_->text().toStdString();
+        return file_edit_;
     }
 
     void ConfigDialog::SetFile(const std::string &file) {
-        file_edit_->setText(QString::fromStdString(file));
+        std::string tr_file= file.substr(0, file.rfind("/"));
+        source_dir_->setText(QString::fromStdString(tr_file));
+
     }
 
     bool ConfigDialog::GetHide() const {
