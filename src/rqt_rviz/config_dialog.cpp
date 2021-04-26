@@ -132,23 +132,27 @@ namespace rqt_rviz {
         source_dir_->setText(filename);
         std::string directory=filename.toUtf8().constData();
         files=get_config_files(directory);
-        for (int i=0;i<files.size();i++)
-            config_list->addItem(QString::fromStdString(files[i]));
-
+        PopulateComboBox(directory);
     }
 
     std::string ConfigDialog::GetFile() const {
         return file_edit_;
     }
 
+    void ConfigDialog::PopulateComboBox(std::string path){
+        std::vector<std::string> files=get_config_files(path);
+        for (int i=0;i<files.size();i++)
+            config_list->addItem(QString::fromStdString(files[i]));
+
+        file_edit_=source_dir_->text().toStdString()+"/"+config_list->currentText().toStdString();
+
+    }
+
     void ConfigDialog::SetFile(const std::string &file) {
         std::string tr_file= file.substr(0, file.rfind("/"));
         source_dir_->setText(QString::fromStdString(tr_file));
 
-
-        std::vector<std::string> files=get_config_files(tr_file);
-        for (int i=0;i<files.size();i++)
-            config_list->addItem(QString::fromStdString(files[i]));
+        PopulateComboBox(tr_file);
 
     }
 

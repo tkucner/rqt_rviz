@@ -88,6 +88,8 @@ private:
   QCheckBox* hide_box_;
 
   QComboBox *config_list;
+
+    void PopulateComboBox(std::string path);
 };
 
 }
