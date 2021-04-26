@@ -145,6 +145,11 @@ namespace rqt_rviz {
         std::string tr_file= file.substr(0, file.rfind("/"));
         source_dir_->setText(QString::fromStdString(tr_file));
 
+
+        std::vector<std::string> files=get_config_files(tr_file);
+        for (int i=0;i<files.size();i++)
+            config_list->addItem(QString::fromStdString(files[i]));
+
     }
 
     bool ConfigDialog::GetHide() const {
