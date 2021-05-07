@@ -39,6 +39,7 @@
 #include <QComboBox>
 #include <vector>
 #include <string>
+#include "ros/ros.h"
 
 namespace rqt_rviz
 {
@@ -76,6 +77,7 @@ private slots:
   void OnSelect();
 
 private:
+
 
     static std::vector<std::string> get_config_files(std::string path);
 

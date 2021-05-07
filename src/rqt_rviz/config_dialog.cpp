@@ -36,7 +36,7 @@
 #include <QPushButton>
 #include <dirent.h>
 #include <QComboBox>
-
+#include "ros/ros.h"
 #include <rqt_rviz/config_dialog.h>
 
 #include <iostream>
@@ -113,6 +113,15 @@ namespace rqt_rviz {
 
 
         this->setLayout(main_layout);
+
+        ros::NodeHandle nh("~");
+        std::string ifile;
+
+        nh.getParam("/rqt/config_directory",ifile);
+        source_dir_->setText(QString::fromStdString(ifile));
+        ROS_INFO("%s",source_dir_->text().toStdString().c_str());
+        PopulateComboBox(ifile);
+
     }
 
     ConfigDialog::~ConfigDialog() {
@@ -141,6 +150,7 @@ namespace rqt_rviz {
 
     void ConfigDialog::PopulateComboBox(std::string path){
         std::vector<std::string> files=get_config_files(path);
+        config_list->clear();
         for (int i=0;i<files.size();i++)
             config_list->addItem(QString::fromStdString(files[i]));
 
@@ -149,10 +159,11 @@ namespace rqt_rviz {
     }
 
     void ConfigDialog::SetFile(const std::string &file) {
-        std::string tr_file= file.substr(0, file.rfind("/"));
-        source_dir_->setText(QString::fromStdString(tr_file));
-
-        PopulateComboBox(tr_file);
+        if(file!="") {
+            std::string tr_file = file.substr(0, file.rfind("/"));
+            source_dir_->setText(QString::fromStdString(tr_file));
+            PopulateComboBox(tr_file);
+        }
 
     }
 
